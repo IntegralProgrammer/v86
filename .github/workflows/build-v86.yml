@@ -55,8 +55,7 @@ jobs:
         run: git config user.name "v86builder" && git config user.email "build@v86builder"
 
       - name: Commit these files to the releases repository
-        working-directory: /tmp/v86-releases-repo
-        run: git commit -m "Add build of $(git rev-parse --verify HEAD)"
+        run: git -C /tmp/v86-releases-repo commit -m "Add build of $(git rev-parse --verify HEAD)"
 
       - name: Push this commit to the releases repository
         working-directory: /tmp/v86-releases-repo
