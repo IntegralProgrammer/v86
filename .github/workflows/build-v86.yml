@@ -1,0 +1,55 @@
+name: Build v86
+
+on:
+  workflow_dispatch:
+
+jobs:
+  buildv86:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+
+      - name: Build v86
+        run: docker build -f tools/docker/exec/Dockerfile -t v86:alpine-3.19
+
+      - name: Clone the releases repository
+        env:
+          RELEASES_REPOSITORY_URL: ${{ secrets.RELEASES_REPOSITORY_URL }}
+        run: git clone ${RELEASES_REPOSITORY_URL} /tmp/v86-releases-repo
+
+      - name: Create a container from the v86 Docker image so files can be copied from it
+        run: docker create --name v86 v86:alpine-3.19
+
+      - name: Copy out v86.wasm
+        run: docker cp v86:/v86/build/v86.wasm /tmp/v86-releases-repo
+
+      - name: Copy out libv86.js
+        run: docker cp v86:/v86/build/libv86.js /tmp/v86-releases-repo
+
+      - name: git add v86.wasm
+        working-directory: /tmp/v86-releases-repo
+        run: git add v86.wasm
+
+      - name: git add libv86.js
+        working-directory: /tmp/v86-releases-repo
+        run: git add libv86.js
+
+      - name: Configure git commit info for the releases repository
+        working-directory: /tmp/v86-releases-repo
+        run: git config user.name "v86builder" && git config user.email "build@v86builder"
+
+      - name: Commit these files to the releases repository
+        working-directory: /tmp/v86-releases-repo
+        run: git commit -m "Add build of ${GITHUB_SHA}"
+
+      - name: Add the deploy key for the releases repository
+        env:
+          RELEASES_DEPLOY_KEY: ${{ secrets.RELEASES_DEPLOY_KEY }}
+        run: printenv RELEASES_DEPLOY_KEY > /tmp/github_id_rsa
+
+      - name: Push this commit to the releases repository
+        working-directory: /tmp/v86-releases-repo
+        env:
+          GIT_SSH_COMMAND: ssh -i /tmp/github_id_rsa
+        run: git push
