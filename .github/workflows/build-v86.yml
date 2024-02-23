@@ -13,9 +13,15 @@ jobs:
       - name: Build v86
         run: docker build -f tools/docker/exec/Dockerfile -t v86:alpine-3.19 .
 
+      - name: Add the deploy key for the releases repository
+        env:
+          RELEASES_DEPLOY_KEY: ${{ secrets.RELEASES_DEPLOY_KEY }}
+        run: printenv RELEASES_DEPLOY_KEY > /tmp/github_id_rsa
+
       - name: Clone the releases repository
         env:
           RELEASES_REPOSITORY_URL: ${{ secrets.RELEASES_REPOSITORY_URL }}
+          GIT_SSH_COMMAND: ssh -i /tmp/github_id_rsa
         run: git clone ${RELEASES_REPOSITORY_URL} /tmp/v86-releases-repo
 
       - name: Create a container from the v86 Docker image so files can be copied from it
@@ -42,11 +48,6 @@ jobs:
       - name: Commit these files to the releases repository
         working-directory: /tmp/v86-releases-repo
         run: git commit -m "Add build of ${GITHUB_SHA}"
-
-      - name: Add the deploy key for the releases repository
-        env:
-          RELEASES_DEPLOY_KEY: ${{ secrets.RELEASES_DEPLOY_KEY }}
-        run: printenv RELEASES_DEPLOY_KEY > /tmp/github_id_rsa
 
       - name: Push this commit to the releases repository
         working-directory: /tmp/v86-releases-repo
