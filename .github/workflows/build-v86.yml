@@ -18,6 +18,9 @@ jobs:
           RELEASES_DEPLOY_KEY: ${{ secrets.RELEASES_DEPLOY_KEY }}
         run: printenv RELEASES_DEPLOY_KEY > /tmp/github_id_rsa
 
+      - name: Set the permissions for the deploy key file
+        run: chmod 400 /tmp/github_id_rsa
+
       - name: Clone the releases repository
         env:
           RELEASES_REPOSITORY_URL: ${{ secrets.RELEASES_REPOSITORY_URL }}
