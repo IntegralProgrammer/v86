@@ -10,6 +10,9 @@ jobs:
       - name: Code Checkout
         uses: actions/checkout@v4
 
+      - name: git fetch --all
+        run: git fetch --all
+
       - name: Build from the upstream master branch (github.com/copy/v86)
         run: git checkout upstream-master
 
